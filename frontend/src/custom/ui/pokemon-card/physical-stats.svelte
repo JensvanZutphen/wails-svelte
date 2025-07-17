@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Ruler, Weight } from '@lucide/svelte';
+	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
+	import { Ruler, Weight, Activity } from '@lucide/svelte';
 
 	export let height: number; // in decimeters
 	export let weight: number; // in hectograms
@@ -10,7 +11,7 @@
 		const totalInches = decimeters * 3.937;
 		const feet = Math.floor(totalInches / 12);
 		const inches = Math.round(totalInches % 12);
-		
+
 		return {
 			meters: `${meters} m`,
 			feet: `${feet}'${inches}"`
@@ -21,7 +22,7 @@
 	function formatWeight(hectograms: number): { kg: string; lbs: string } {
 		const kg = (hectograms / 10).toFixed(1);
 		const lbs = (hectograms * 0.220462).toFixed(1);
-		
+
 		return {
 			kg: `${kg} kg`,
 			lbs: `${lbs} lbs`
@@ -33,40 +34,51 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-lg font-semibold text-gray-800 mb-3">Physical Stats</h3>
-	
+	<div class="flex items-center gap-2 mb-3">
+		<Activity class="h-5 w-5 text-emerald-600" />
+		<h3 class="text-lg font-semibold text-gray-800">Physical Stats</h3>
+	</div>
+
 	<div class="grid grid-cols-2 gap-4">
 		<!-- Height -->
-		<div class="bg-blue-50 rounded-lg p-3 border border-blue-200">
-			<div class="flex items-center gap-2 mb-2">
-				<Ruler class="h-4 w-4 text-blue-600" />
-				<span class="font-medium text-blue-800 text-sm">Height</span>
-			</div>
-			<div class="space-y-1">
-				<div class="text-lg font-bold text-blue-900">
-					{formattedHeight.meters}
+		<Card class="border-blue-200 bg-blue-50/50">
+			<CardHeader class="pb-2">
+				<div class="flex items-center gap-2">
+					<Ruler class="h-4 w-4 text-blue-600" />
+					<span class="text-sm font-medium text-blue-800">Height</span>
 				</div>
-				<div class="text-sm text-blue-600">
-					{formattedHeight.feet}
+			</CardHeader>
+			<CardContent class="pt-0">
+				<div class="space-y-1">
+					<div class="text-lg font-bold text-blue-900">
+						{formattedHeight.meters}
+					</div>
+					<div class="text-sm text-blue-600">
+						{formattedHeight.feet}
+					</div>
 				</div>
-			</div>
-		</div>
+			</CardContent>
+		</Card>
 
 		<!-- Weight -->
-		<div class="bg-green-50 rounded-lg p-3 border border-green-200">
-			<div class="flex items-center gap-2 mb-2">
-				<Weight class="h-4 w-4 text-green-600" />
-				<span class="font-medium text-green-800 text-sm">Weight</span>
-			</div>
-			<div class="space-y-1">
-				<div class="text-lg font-bold text-green-900">
-					{formattedWeight.kg}
+		<Card class="border-green-200 bg-green-50/50">
+			<CardHeader class="pb-2">
+				<div class="flex items-center gap-2">
+					<Weight class="h-4 w-4 text-green-600" />
+					<span class="text-sm font-medium text-green-800">Weight</span>
 				</div>
-				<div class="text-sm text-green-600">
-					{formattedWeight.lbs}
+			</CardHeader>
+			<CardContent class="pt-0">
+				<div class="space-y-1">
+					<div class="text-lg font-bold text-green-900">
+						{formattedWeight.kg}
+					</div>
+					<div class="text-sm text-green-600">
+						{formattedWeight.lbs}
+					</div>
 				</div>
-			</div>
-		</div>
+			</CardContent>
+		</Card>
 	</div>
 </div>
 

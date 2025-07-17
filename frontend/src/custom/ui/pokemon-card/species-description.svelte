@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { Card, CardContent, CardHeader } from '$lib/components/ui/card';
 	import { BookOpen } from '@lucide/svelte';
 	import type { PokemonSpecies } from '../shared/types';
 
@@ -30,17 +31,21 @@
 	</div>
 	
 	{#if showDescription}
-		<div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-			<p class="text-sm text-gray-700 leading-relaxed">
-				{cleanedDescription}
-			</p>
-		</div>
+		<Card class="bg-indigo-50/50 border-indigo-200">
+			<CardContent class="p-4">
+				<p class="text-sm text-foreground leading-relaxed">
+					{cleanedDescription}
+				</p>
+			</CardContent>
+		</Card>
 	{:else}
-		<div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-			<p class="text-sm text-gray-400 italic text-center">
-				Species description not available
-			</p>
-		</div>
+		<Card class="bg-muted/50">
+			<CardContent class="p-4">
+				<p class="text-sm text-muted-foreground italic text-center">
+					Species description not available
+				</p>
+			</CardContent>
+		</Card>
 	{/if}
 </div>
 
