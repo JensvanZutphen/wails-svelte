@@ -9,28 +9,41 @@ Wails is a framework for building desktop applications using Go for the backend 
 ## Project Structure
 
 ```
-├── main.go          # Wails app entry point
-├── app.go           # Core app structure and methods
-├── api.go           # HTTP API calls to external services
-├── pokemon.go       # Data models and types
-├── wails.json       # Wails configuration
-└── frontend/        # Svelte frontend
+├── main.go                     # Wails app entry point
+├── wails.json                  # Wails configuration
+├── go.mod                      # Go module dependencies
+├── internal/                   # Private application code
+│   ├── app/
+│   │   └── app.go             # Core app structure and Wails bindings
+│   ├── models/
+│   │   └── pokemon.go         # Data models and types
+│   └── services/
+│       └── pokemon.go         # Business logic and API calls
+└── frontend/                   # Svelte frontend
     ├── src/
     │   ├── routes/
-    │   │   └── +page.svelte    # Main Pokemon component
+    │   │   └── +page.svelte   # Main Pokemon component
     │   └── lib/
-    │       └── wailsjs/        # Auto-generated Go bindings
-    └── svelte.config.js        # Svelte configuration
+    │       └── wailsjs/       # Auto-generated Go bindings
+    └── svelte.config.js       # Svelte configuration
 ```
 
 ## How It Works
 
 ### Backend (Go)
 
-1. **App Structure** (`app.go`): Defines the main App struct that Wails binds to
-2. **API Layer** (`api.go`): Handles HTTP requests to the Pokemon API
-3. **Data Models** (`pokemon.go`): Defines the Pokemon struct for type safety
+The backend follows a clean architecture pattern with clear separation of concerns:
+
+1. **App Layer** (`internal/app/`): Wails bindings and application entry points
+2. **Service Layer** (`internal/services/`): Business logic and external API integration
+3. **Model Layer** (`internal/models/`): Data structures and types
 4. **Method Binding**: Go methods are automatically exposed to the frontend
+
+#### Architecture Benefits:
+- **Separation of Concerns**: Each layer has a single responsibility
+- **Testability**: Services can be easily unit tested
+- **Maintainability**: Changes to API logic don't affect app structure
+- **Scalability**: Easy to add new services and models
 
 ```go
 // This Go method becomes available in the frontend

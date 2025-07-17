@@ -1,5 +1,5 @@
 <script>
-	import { GetRandomPokemon } from '$lib/wailsjs/go/main/App';
+	import { GetRandomPokemon } from '$lib/wailsjs/go/app/App';
 
 	let pokemonId = $state(0);
 

@@ -1,4 +1,4 @@
-package main
+package models
 
 // Pokemon represents a Pokemon with basic info
 type Pokemon struct {
