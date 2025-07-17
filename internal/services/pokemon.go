@@ -304,32 +304,7 @@ func (s *PokemonService) extractEvolutions(link *EvolutionChainLink, evolutions 
 
 	// Process all evolutions with their requirements
 	for _, evolutionLink := range link.EvolvesTo {
-		// Get Pokemon data for the evolved form
-		evolvedPokemonData, err := s.fetchBasicPokemonData(evolutionLink.Species.Name)
-		if err == nil {
-			evolution := models.PokemonEvolution{
-				Name:     evolvedPokemonData.Name,
-				ID:       evolvedPokemonData.ID,
-				ImageURL: evolvedPokemonData.Sprites.FrontDefault,
-			}
-
-			// Extract evolution requirements
-			if len(evolutionLink.EvolutionDetails) > 0 {
-				details := evolutionLink.EvolutionDetails[0] // Use first evolution detail
-				evolution.MinLevel = details.MinLevel
-				evolution.TriggerName = details.Trigger.Name
-				if details.Item.Name != "" {
-					evolution.ItemName = details.Item.Name
-				}
-				if details.HeldItem.Name != "" {
-					evolution.HeldItemName = details.HeldItem.Name
-				}
-			}
-
-			*evolutions = append(*evolutions, evolution)
-		}
-
-		// Continue recursively
+		// Continue recursively - this will add the evolved Pokemon and its requirements
 		s.extractEvolutions(&evolutionLink, evolutions)
 	}
 }

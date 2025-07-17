@@ -12,44 +12,32 @@
 		enableParticles = true
 	}: AnimatedBackgroundProps = $props();
 
-	// Svelte 5 runes
 	let mounted = $state(false);
 	let particles = $state<Particle[]>([]);
-	let animationTime = $state(0);
+	let time = $state(0);
 
-	// Create particle system instance
-	const particleSystem = new ParticleSystem(particleCount);
+	const system = new ParticleSystem(particleCount);
+	let orbs = $derived(calculateOrbPositions(time * animationSpeed));
 
-	// Derived values for background orbs using runes
-	let orbPositions = $derived(calculateOrbPositions(animationTime * animationSpeed));
-
-	// Effect to handle animation loop
 	$effect(() => {
 		if (!mounted) return;
 		
-		const cleanup = createAnimationLoop((time) => {
-			animationTime = time;
+		const stop = createAnimationLoop((t) => {
+			time = t;
 		});
 		
-		return cleanup;
+		return stop;
 	});
 
-	// Effect to handle mounting
 	$effect(() => {
 		mounted = true;
 	});
 
-	// Function to trigger particle animation (called from parent)
 	export function triggerParticles(): void {
 		if (!enableParticles) return;
 		
-		const newParticles = particleSystem.createParticles();
-		particles = newParticles;
-
-		// Remove particles after animation
-		setTimeout(() => {
-			particles = [];
-		}, 2000);
+		particles = system.createParticles();
+		setTimeout(() => particles = [], 2000);
 	}
 </script>
 
@@ -60,15 +48,15 @@
 		{#if mounted}
 			<div
 				class="absolute h-80 w-80 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 blur-3xl"
-				style="transform: translate({orbPositions.orb1.x}px, {orbPositions.orb1.y}px) scale({orbPositions.orb1.scale})"
+				style="transform: translate({orbs.orb1.x}px, {orbs.orb1.y}px) scale({orbs.orb1.scale})"
 			></div>
 			<div
 				class="absolute h-80 w-80 rounded-full bg-gradient-to-br from-pink-400/20 to-yellow-400/20 blur-3xl"
-				style="transform: translate({orbPositions.orb2.x}px, {orbPositions.orb2.y}px) scale({orbPositions.orb2.scale})"
+				style="transform: translate({orbs.orb2.x}px, {orbs.orb2.y}px) scale({orbs.orb2.scale})"
 			></div>
 			<div
 				class="absolute left-1/2 top-1/2 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-gradient-to-br from-green-400/10 to-blue-400/10 blur-3xl"
-				style="transform: translate(calc(-50% + {orbPositions.orb3.x}px), calc(-50% + {orbPositions.orb3.y}px)) scale({orbPositions.orb3.scale})"
+				style="transform: translate(calc(-50% + {orbs.orb3.x}px), calc(-50% + {orbs.orb3.y}px)) scale({orbs.orb3.scale})"
 			></div>
 		{/if}
 	</div>

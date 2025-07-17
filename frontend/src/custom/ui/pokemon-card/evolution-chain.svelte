@@ -2,8 +2,11 @@
 	import type { models } from '$lib/wailsjs/go/models';
 	import { GetPokemonByID } from '$lib/wailsjs/go/app/App';
 
-	let { evolutions, onPokemonClick }: { 
-		evolutions: models.PokemonEvolution[]; 
+	let {
+		evolutions,
+		onPokemonClick
+	}: {
+		evolutions: models.PokemonEvolution[];
 		onPokemonClick?: (pokemon: models.Pokemon) => void;
 	} = $props();
 
@@ -16,6 +19,18 @@
 			console.error('Failed to fetch Pokemon:', error);
 		}
 	}
+
+	// Remove duplicates and sort by ID to show proper evolution order
+	let uniqueEvolutions = $derived.by(() => {
+		const seen = new Set<number>();
+		return evolutions
+			.filter(evo => {
+				if (seen.has(evo.id)) return false;
+				seen.add(evo.id);
+				return true;
+			})
+			.sort((a, b) => a.id - b.id);
+	});
 
 	function getEvolutionRequirement(evolution: models.PokemonEvolution): string {
 		if (evolution.min_level && evolution.min_level > 0) {
@@ -40,10 +55,10 @@
 			Evolution Chain
 		</h4>
 		<div class="evolution-chain">
-			{#each evolutions as evolution, index}
-				<button 
-					class="evolution-item" 
-					class:clickable={onPokemonClick} 
+			{#each uniqueEvolutions as evolution, index}
+				<button
+					class="evolution-item"
+					class:clickable={onPokemonClick}
 					onclick={() => handlePokemonClick(evolution)}
 					disabled={!onPokemonClick}
 					aria-label="View {evolution.name} details"
@@ -57,12 +72,15 @@
 					<span style="font-size: 12px; font-weight: 500; color: #6B7280; text-align: center;">
 						#{evolution.id.toString().padStart(3, '0')}
 					</span>
-					<span style="font-size: 12px; font-weight: 600; color: #374151; text-align: center; text-transform: capitalize;">
+					<span
+						style="font-size: 12px; font-weight: 600; color: #374151; text-align: center; text-transform: capitalize;"
+					>
 						{evolution.name}
 					</span>
 				</button>
-				{#if index < evolutions.length - 1}
-					{@const requirement = getEvolutionRequirement(evolutions[index + 1])}
+				{#if index < uniqueEvolutions.length - 1}
+					{@const nextEvolution = uniqueEvolutions[index + 1]}
+					{@const requirement = getEvolutionRequirement(nextEvolution)}
 					<div class="evolution-requirement">
 						{#if requirement}
 							<span class="requirement-text">{requirement}</span>
@@ -79,9 +97,9 @@
 	.evolution-section {
 		margin-top: 12px;
 		padding: 12px;
-		background: #F9FAFB;
+		background: #f9fafb;
 		border-radius: 8px;
-		border: 1px solid #E5E7EB;
+		border: 1px solid #e5e7eb;
 	}
 
 	.evolution-chain {
@@ -101,7 +119,7 @@
 		padding: 8px;
 		background: white;
 		border-radius: 8px;
-		border: 1px solid #E5E7EB;
+		border: 1px solid #e5e7eb;
 		transition: all 0.2s ease;
 		cursor: pointer;
 		font: inherit;
@@ -122,8 +140,8 @@
 	}
 
 	.evolution-item.clickable:hover {
-		border-color: #3B82F6;
-		background: #EFF6FF;
+		border-color: #3b82f6;
+		background: #eff6ff;
 	}
 
 	.evolution-requirement {
@@ -137,9 +155,9 @@
 	.requirement-text {
 		font-size: 10px;
 		font-weight: 500;
-		color: #6B7280;
+		color: #6b7280;
 		text-align: center;
-		background: #F3F4F6;
+		background: #f3f4f6;
 		padding: 2px 6px;
 		border-radius: 4px;
 		white-space: nowrap;
@@ -147,7 +165,7 @@
 	}
 
 	.evolution-arrow {
-		color: #9CA3AF;
+		color: #9ca3af;
 		font-weight: bold;
 		font-size: 16px;
 	}
@@ -156,12 +174,12 @@
 		.evolution-chain {
 			gap: 6px;
 		}
-		
+
 		.evolution-item {
 			min-width: 50px;
 			padding: 6px;
 		}
-		
+
 		.evolution-arrow {
 			font-size: 14px;
 			margin: 0 2px;

@@ -7,92 +7,58 @@
 	import type { Pokemon } from '../custom/ui/shared/types.js';
 	import { preloadImages } from '../custom/ui/shared/utils.js';
 
-	// Svelte 5 runes with async support
 	let pokemonPromise = $state<Promise<Pokemon> | null>(null);
-	let animatedBackground: AnimatedBackground;
+	let bg: AnimatedBackground;
 
-	async function fetchPokemonWithPreload(): Promise<Pokemon> {
+	async function loadPokemon(): Promise<Pokemon> {
 		const pokemon = await GetRandomPokemon();
+		const urls = [pokemon.image_url];
 		
-		// Collect all image URLs to preload
-		const imageUrls = [pokemon.image_url];
-		
-		// Add evolution images if they exist
 		if (pokemon.species?.evolutions) {
-			pokemon.species.evolutions.forEach(evolution => {
-				if (evolution.image_url) {
-					imageUrls.push(evolution.image_url);
-				}
+			pokemon.species.evolutions.forEach(evo => {
+				if (evo.image_url) urls.push(evo.image_url);
 			});
 		}
 		
-		// Preload all images
-		await preloadImages(imageUrls);
-		
+		await preloadImages(urls);
 		return pokemon;
 	}
 
-	function fetchNewPokemon() {
-		// Trigger particle animation in background component
-		if (animatedBackground) {
-			animatedBackground.triggerParticles();
-		}
-
-		pokemonPromise = fetchPokemonWithPreload();
+	function fetchNew() {
+		if (bg) bg.triggerParticles();
+		pokemonPromise = loadPokemon();
 	}
 
-	function handlePokemonChange(pokemon: Pokemon) {
-		// Trigger particle animation in background component
-		if (animatedBackground) {
-			animatedBackground.triggerParticles();
-		}
+	function changePokemon(pokemon: Pokemon) {
+		if (bg) bg.triggerParticles();
 
-		// Create a promise that preloads images before resolving
 		pokemonPromise = (async () => {
-			// Collect all image URLs to preload
-			const imageUrls = [pokemon.image_url];
-			
-			// Add evolution images if they exist
+			const urls = [pokemon.image_url];
 			if (pokemon.species?.evolutions) {
-				pokemon.species.evolutions.forEach(evolution => {
-					if (evolution.image_url) {
-						imageUrls.push(evolution.image_url);
-					}
+				pokemon.species.evolutions.forEach(evo => {
+					if (evo.image_url) urls.push(evo.image_url);
 				});
 			}
-			
-			// Preload all images
-			await preloadImages(imageUrls);
-			
+			await preloadImages(urls);
 			return pokemon;
 		})();
 	}
 </script>
 
-<!-- Main layout with animated background -->
 <div class="relative flex h-screen flex-col overflow-hidden">
-	<!-- Animated Background Component -->
-	<AnimatedBackground bind:this={animatedBackground} />
+	<AnimatedBackground bind:this={bg} />
 
-	<main
-		class="container relative mx-auto flex h-full max-w-7xl flex-col justify-center px-3 py-4 sm:px-4 sm:py-6 lg:px-6"
-	>
-		<!-- Hero Section Component -->
-		<HeroSection onDiscoverClick={fetchNewPokemon} />
+	<main class="container relative mx-auto flex h-full max-w-7xl flex-col justify-center px-3 py-4 sm:px-4 sm:py-6 lg:px-6">
+		<HeroSection onDiscoverClick={fetchNew} />
 
-		<!-- Pokemon Display Area -->
 		{#if pokemonPromise}
 			{#await pokemonPromise}
 				<div class="text-center">
 					<PokemonCard pokemon={null} isLoading={true} />
-					<p class="mt-2 text-sm text-gray-500 animate-pulse">Preparing your Pokémon...</p>
+					<p class="mt-2 text-sm text-gray-500 animate-pulse">Loading...</p>
 				</div>
 			{:then pokemon}
-				<PokemonCard
-					pokemon={pokemon}
-					isLoading={false}
-					onPokemonChange={handlePokemonChange}
-				/>
+				<PokemonCard pokemon={pokemon} isLoading={false} onPokemonChange={changePokemon} />
 			{:catch error}
 				<PokemonCard pokemon={null} isLoading={false} error={error.message} />
 			{/await}
