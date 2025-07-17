@@ -46,8 +46,16 @@
 	import AbilityList from './ability-list.svelte';
 	import PhysicalStats from './physical-stats.svelte';
 	import SpeciesDescription from './species-description.svelte';
+	import EvolutionChain from './evolution-chain.svelte';
 
-	let { pokemon, isLoading, error, isFlipped = false, onFlip }: PokemonFlipCardProps = $props();
+	let {
+		pokemon,
+		isLoading,
+		error,
+		isFlipped = false,
+		onFlip,
+		onPokemonChange
+	}: PokemonFlipCardProps = $props();
 
 	// Flip state management
 	let flipState = $state(createFlipState(isFlipped));
@@ -101,9 +109,6 @@
 						<Skeleton class="h-5 w-12 rounded-full sm:h-6 sm:w-16" />
 						<Skeleton class="h-5 w-12 rounded-full sm:h-6 sm:w-16" />
 					</div>
-					<div class="flex justify-center">
-						<Heart class="h-4 w-4 animate-pulse text-pink-400 sm:h-5 sm:w-5" />
-					</div>
 				</div>
 			</CardContent>
 		</Card>
@@ -120,7 +125,7 @@
 	</div>
 {:else if pokemon}
 	<!-- Pokemon Flip Card -->
-	<div class="w-full max-w-[400px] mx-auto" style="perspective:1000px;">
+	<div class="mx-auto w-full max-w-[400px]" style="perspective:1000px;">
 		<div
 			style="position: relative; width: 100%; height: 500px; transform-style: preserve-3d; transition: transform 0.5s; cursor: pointer; {flipState.isFlipped
 				? 'transform: rotateY(180deg);'
@@ -144,12 +149,15 @@
 				<img
 					src={pokemon.image_url}
 					alt={pokemon.name}
-					style="width: 200px; height: 200px; object-fit: contain; margin-bottom: 16px;"
+					style="width: 200px; height: 200px; object-fit: contain; margin-bottom: 16px; opacity: 1; transition: opacity 0.3s ease-in-out;"
+					loading="eager"
 				/>
 				<div style="display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;">
 					{#each pokemon.types as type}
 						<span
-							style="background: {getTypeColorHex(type)}; color: white; padding: 6px 12px; border-radius: 16px; font-size: 14px; font-weight: 600;"
+							style="background: {getTypeColorHex(
+								type
+							)}; color: white; padding: 6px 12px; border-radius: 16px; font-size: 14px; font-weight: 600;"
 						>
 							{type.charAt(0).toUpperCase() + type.slice(1)}
 						</span>
@@ -177,7 +185,9 @@
 				>
 					{#each pokemon.types as type}
 						<span
-							style="background: {getTypeColorHex(type)}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;"
+							style="background: {getTypeColorHex(
+								type
+							)}; color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600;"
 						>
 							{type.charAt(0).toUpperCase() + type.slice(1)}
 						</span>
@@ -202,6 +212,14 @@
 				<!-- Species Description -->
 				{#if pokemon.species}
 					<SpeciesDescription species={pokemon.species} />
+				{/if}
+
+				<!-- Evolution Chain -->
+				{#if pokemon.species && pokemon.species.evolutions && pokemon.species.evolutions.length > 0}
+					<EvolutionChain
+						evolutions={pokemon.species.evolutions}
+						onPokemonClick={onPokemonChange}
+					/>
 				{/if}
 			</div>
 		</div>
@@ -361,6 +379,14 @@
 									<!-- Species Description -->
 									{#if pokemon.species}
 										<SpeciesDescription species={pokemon.species} />
+									{/if}
+
+									<!-- Evolution Chain -->
+									{#if pokemon.species && pokemon.species.evolutions && pokemon.species.evolutions.length > 0}
+										<EvolutionChain
+											evolutions={pokemon.species.evolutions}
+											onPokemonClick={onPokemonChange}
+										/>
 									{/if}
 								</div>
 							</CardContent>

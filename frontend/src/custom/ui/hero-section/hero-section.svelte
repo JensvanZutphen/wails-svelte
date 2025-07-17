@@ -9,12 +9,14 @@
 		title = 'PokéDiscover',
 		subtitle = 'Embark on a magical journey to discover amazing Pokémon from across the universe',
 		buttonText = 'Discover New Pokémon',
-		onDiscoverClick,
-		isLoading = false
+		onDiscoverClick
 	}: HeroSectionProps = $props();
 
 	// Svelte 5 runes
 	let mounted = $state(false);
+	
+	// Use Svelte 5's async loading detection
+	let isLoading = $derived($effect.pending() > 0);
 
 	// Effect to handle mounting
 	$effect(() => {

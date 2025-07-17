@@ -67,6 +67,44 @@ type PokeAPISpeciesResponse struct {
 			Name string `json:"name"`
 		} `json:"language"`
 	} `json:"flavor_text_entries"`
+	EvolutionChain struct {
+		URL string `json:"url"`
+	} `json:"evolution_chain"`
+}
+
+// PokeAPIEvolutionChainResponse represents the evolution chain response from PokeAPI
+type PokeAPIEvolutionChainResponse struct {
+	Chain EvolutionChainLink `json:"chain"`
+}
+
+// EvolutionChainLink represents a link in the evolution chain
+type EvolutionChainLink struct {
+	Species struct {
+		Name string `json:"name"`
+		URL  string `json:"url"`
+	} `json:"species"`
+	EvolutionDetails []struct {
+		MinLevel int `json:"min_level"`
+		Trigger  struct {
+			Name string `json:"name"`
+		} `json:"trigger"`
+		Item struct {
+			Name string `json:"name"`
+		} `json:"item"`
+		HeldItem struct {
+			Name string `json:"name"`
+		} `json:"held_item"`
+	} `json:"evolution_details"`
+	EvolvesTo []EvolutionChainLink `json:"evolves_to"`
+}
+
+// PokeAPIPokemonBasicResponse represents a basic Pokemon response for evolution data
+type PokeAPIPokemonBasicResponse struct {
+	ID      int    `json:"id"`
+	Name    string `json:"name"`
+	Sprites struct {
+		FrontDefault string `json:"front_default"`
+	} `json:"sprites"`
 }
 
 // PokeAPIAbilityResponse represents the ability response from PokeAPI
@@ -83,7 +121,11 @@ type PokeAPIAbilityResponse struct {
 func (s *PokemonService) GetRandomPokemon() (*Pokemon, error) {
 	// Generate random Pokemon ID up to the sinnoh region (1 - 493 for the sinnoh region)
 	pokemonID := rand.Intn(493) + 1
+	return s.GetPokemonByID(pokemonID)
+}
 
+// GetPokemonByID fetches a specific Pokemon by ID from the PokeAPI
+func (s *PokemonService) GetPokemonByID(pokemonID int) (*Pokemon, error) {
 	// Fetch Pokemon data
 	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%d", pokemonID)
 	resp, err := s.client.Get(url)
@@ -131,11 +173,14 @@ func (s *PokemonService) GetRandomPokemon() (*Pokemon, error) {
 		})
 	}
 
-	// Fetch species description
-	speciesDescription, err := s.fetchSpeciesDescription(data.Species.URL)
+	// Fetch species data (description and evolutions)
+	species, err := s.fetchSpeciesData(data.Species.URL)
 	if err != nil {
-		// If we can't fetch the description, use empty string as fallback
-		speciesDescription = ""
+		// If we can't fetch the species data, use empty values as fallback
+		species = models.PokemonSpecies{
+			Description: "",
+			Evolutions:  []models.PokemonEvolution{},
+		}
 	}
 
 	return &Pokemon{
@@ -147,9 +192,7 @@ func (s *PokemonService) GetRandomPokemon() (*Pokemon, error) {
 		Abilities: abilities,
 		Height:    data.Height,
 		Weight:    data.Weight,
-		Species: models.PokemonSpecies{
-			Description: speciesDescription,
-		},
+		Species:   species,
 	}, nil
 }
 
@@ -180,29 +223,134 @@ func (s *PokemonService) fetchAbilityDescription(url string) (string, error) {
 	return "", nil
 }
 
-// fetchSpeciesDescription fetches the species description for a Pokemon
-func (s *PokemonService) fetchSpeciesDescription(url string) (string, error) {
+// fetchSpeciesData fetches the species data including description and evolutions
+func (s *PokemonService) fetchSpeciesData(url string) (models.PokemonSpecies, error) {
 	resp, err := s.client.Get(url)
 	if err != nil {
-		return "", fmt.Errorf("failed to fetch species: %w", err)
+		return models.PokemonSpecies{}, fmt.Errorf("failed to fetch species: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "", fmt.Errorf("API returned status %d", resp.StatusCode)
+		return models.PokemonSpecies{}, fmt.Errorf("API returned status %d", resp.StatusCode)
 	}
 
 	var data PokeAPISpeciesResponse
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return "", fmt.Errorf("failed to decode species response: %w", err)
+		return models.PokemonSpecies{}, fmt.Errorf("failed to decode species response: %w", err)
 	}
 
 	// Find English flavor text
+	var description string
 	for _, entry := range data.FlavorTextEntries {
 		if entry.Language.Name == "en" {
-			return entry.FlavorText, nil
+			description = entry.FlavorText
+			break
 		}
 	}
 
-	return "", nil
+	// Fetch evolution chain
+	var evolutions []models.PokemonEvolution
+	if data.EvolutionChain.URL != "" {
+		evolutions, err = s.fetchEvolutionChain(data.EvolutionChain.URL)
+		if err != nil {
+			// If we can't fetch evolutions, continue with empty slice
+			evolutions = []models.PokemonEvolution{}
+		}
+	}
+
+	return models.PokemonSpecies{
+		Description: description,
+		Evolutions:  evolutions,
+	}, nil
+}
+
+// fetchEvolutionChain fetches the evolution chain for a Pokemon
+func (s *PokemonService) fetchEvolutionChain(url string) ([]models.PokemonEvolution, error) {
+	resp, err := s.client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch evolution chain: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	var data PokeAPIEvolutionChainResponse
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("failed to decode evolution chain response: %w", err)
+	}
+
+	// Extract all Pokemon in the evolution chain
+	var evolutions []models.PokemonEvolution
+	s.extractEvolutions(&data.Chain, &evolutions)
+
+	return evolutions, nil
+}
+
+// extractEvolutions recursively extracts all Pokemon from the evolution chain
+func (s *PokemonService) extractEvolutions(link *EvolutionChainLink, evolutions *[]models.PokemonEvolution) {
+	// Get Pokemon data for this evolution
+	pokemonData, err := s.fetchBasicPokemonData(link.Species.Name)
+	if err == nil {
+		evolution := models.PokemonEvolution{
+			Name:     pokemonData.Name,
+			ID:       pokemonData.ID,
+			ImageURL: pokemonData.Sprites.FrontDefault,
+		}
+		*evolutions = append(*evolutions, evolution)
+	}
+
+	// Process all evolutions with their requirements
+	for _, evolutionLink := range link.EvolvesTo {
+		// Get Pokemon data for the evolved form
+		evolvedPokemonData, err := s.fetchBasicPokemonData(evolutionLink.Species.Name)
+		if err == nil {
+			evolution := models.PokemonEvolution{
+				Name:     evolvedPokemonData.Name,
+				ID:       evolvedPokemonData.ID,
+				ImageURL: evolvedPokemonData.Sprites.FrontDefault,
+			}
+
+			// Extract evolution requirements
+			if len(evolutionLink.EvolutionDetails) > 0 {
+				details := evolutionLink.EvolutionDetails[0] // Use first evolution detail
+				evolution.MinLevel = details.MinLevel
+				evolution.TriggerName = details.Trigger.Name
+				if details.Item.Name != "" {
+					evolution.ItemName = details.Item.Name
+				}
+				if details.HeldItem.Name != "" {
+					evolution.HeldItemName = details.HeldItem.Name
+				}
+			}
+
+			*evolutions = append(*evolutions, evolution)
+		}
+
+		// Continue recursively
+		s.extractEvolutions(&evolutionLink, evolutions)
+	}
+}
+
+// fetchBasicPokemonData fetches basic Pokemon data for evolution info
+func (s *PokemonService) fetchBasicPokemonData(name string) (*PokeAPIPokemonBasicResponse, error) {
+	url := fmt.Sprintf("https://pokeapi.co/api/v2/pokemon/%s", name)
+	resp, err := s.client.Get(url)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch Pokemon data: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d", resp.StatusCode)
+	}
+
+	var data PokeAPIPokemonBasicResponse
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		return nil, fmt.Errorf("failed to decode Pokemon response: %w", err)
+	}
+
+	return &data, nil
 }

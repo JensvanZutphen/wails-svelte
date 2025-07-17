@@ -13,9 +13,21 @@ type PokemonAbility struct {
 	IsHidden    bool   `json:"is_hidden"`
 }
 
+// PokemonEvolution represents a Pokemon evolution
+type PokemonEvolution struct {
+	Name         string `json:"name"`
+	ID           int    `json:"id"`
+	ImageURL     string `json:"image_url"`
+	MinLevel     int    `json:"min_level,omitempty"`
+	TriggerName  string `json:"trigger_name,omitempty"`
+	ItemName     string `json:"item_name,omitempty"`
+	HeldItemName string `json:"held_item_name,omitempty"`
+}
+
 // PokemonSpecies represents Pokemon species information
 type PokemonSpecies struct {
-	Description string `json:"description"`
+	Description string             `json:"description"`
+	Evolutions  []PokemonEvolution `json:"evolutions"`
 }
 
 // Pokemon represents a Pokemon with detailed info

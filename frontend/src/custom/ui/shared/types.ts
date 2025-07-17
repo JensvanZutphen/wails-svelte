@@ -15,6 +15,7 @@ export type Pokemon = models.Pokemon;
 export type PokemonStat = models.PokemonStat;
 export type PokemonAbility = models.PokemonAbility;
 export type PokemonSpecies = models.PokemonSpecies;
+export type PokemonEvolution = models.PokemonEvolution;
 
 // Component prop interfaces
 export interface AnimatedBackgroundProps {
@@ -29,7 +30,6 @@ export interface HeroSectionProps {
 	subtitle?: string;
 	buttonText?: string;
 	onDiscoverClick: () => void;
-	isLoading?: boolean;
 }
 
 export interface PokemonCardProps {
@@ -44,6 +44,7 @@ export interface PokemonFlipCardProps {
 	error?: string;
 	isFlipped?: boolean;
 	onFlip?: () => void;
+	onPokemonChange?: (pokemon: Pokemon) => void;
 }
 
 export interface WelcomeStateProps {

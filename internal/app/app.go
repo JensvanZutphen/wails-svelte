@@ -35,3 +35,8 @@ func (a *App) Greet(name string) string {
 func (a *App) GetRandomPokemon() (*services.Pokemon, error) {
 	return a.pokemonService.GetRandomPokemon()
 }
+
+// GetPokemonByID fetches a specific Pokemon by ID from the PokeAPI
+func (a *App) GetPokemonByID(id int) (*services.Pokemon, error) {
+	return a.pokemonService.GetPokemonByID(id)
+}

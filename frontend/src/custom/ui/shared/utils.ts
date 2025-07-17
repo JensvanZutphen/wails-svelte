@@ -38,9 +38,21 @@ export function createParticles(count: number): Array<{id: number; x: number; y:
 // Utility for preloading images
 export async function preloadImage(src: string): Promise<void> {
 	return new Promise((resolve, reject) => {
+		if (!src) {
+			resolve();
+			return;
+		}
 		const img = new Image();
 		img.onload = () => resolve();
-		img.onerror = reject;
+		img.onerror = () => resolve(); // Don't reject, just resolve to prevent blocking
 		img.src = src;
 	});
+}
+
+// Utility for preloading multiple images
+export async function preloadImages(srcs: string[]): Promise<void> {
+	const validSrcs = srcs.filter(src => src && src.trim() !== '');
+	if (validSrcs.length === 0) return;
+	
+	await Promise.allSettled(validSrcs.map(src => preloadImage(src)));
 }

@@ -1,7 +1,32 @@
 export namespace models {
 	
+	export class PokemonEvolution {
+	    name: string;
+	    id: number;
+	    image_url: string;
+	    min_level?: number;
+	    trigger_name?: string;
+	    item_name?: string;
+	    held_item_name?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new PokemonEvolution(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.id = source["id"];
+	        this.image_url = source["image_url"];
+	        this.min_level = source["min_level"];
+	        this.trigger_name = source["trigger_name"];
+	        this.item_name = source["item_name"];
+	        this.held_item_name = source["held_item_name"];
+	    }
+	}
 	export class PokemonSpecies {
 	    description: string;
+	    evolutions: PokemonEvolution[];
 	
 	    static createFrom(source: any = {}) {
 	        return new PokemonSpecies(source);
@@ -10,7 +35,26 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.description = source["description"];
+	        this.evolutions = this.convertValues(source["evolutions"], PokemonEvolution);
 	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
 	}
 	export class PokemonAbility {
 	    name: string;
@@ -88,6 +132,7 @@ export namespace models {
 		    return a;
 		}
 	}
+	
 	
 	
 
