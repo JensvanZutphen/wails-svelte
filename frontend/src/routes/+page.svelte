@@ -1,5 +1,10 @@
 <script>
 	import { GetRandomPokemon } from '$lib/wailsjs/go/app/App';
+	import { Button } from '$lib/components/ui/button';
+	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
+	import { Badge } from '$lib/components/ui/badge';
+	import { Alert, AlertDescription } from '$lib/components/ui/alert';
+	import { Skeleton } from '$lib/components/ui/skeleton';
 
 	let pokemonId = $state(0);
 
@@ -25,83 +30,45 @@
 	}
 </script>
 
-<main>
-	<h1>Pokemon Example</h1>
+<main class="container mx-auto max-w-2xl space-y-6 px-4 py-8">
+	<h1 class="text-center text-3xl font-bold">Pokemon Example</h1>
 
-	<button onclick={fetchNewPokemon}> Get Random Pokemon </button>
+	<div class="flex justify-center">
+		<Button onclick={fetchNewPokemon}>Get Random Pokemon</Button>
+	</div>
 
 	{#if pokemonId > 0}
 		{#await getPokemon()}
-			<div class="loading">Loading Pokemon...</div>
+			<div class="space-y-4">
+				<Skeleton class="h-8 w-48" />
+				<Skeleton class="h-32 w-32 rounded-lg" />
+				<div class="flex gap-2">
+					<Skeleton class="h-6 w-16" />
+					<Skeleton class="h-6 w-16" />
+				</div>
+			</div>
 		{:then pokemon}
 			{#if pokemon}
-				<div class="pokemon">
-					<h2>#{pokemon.id} {pokemon.name}</h2>
-					<img src={pokemon.image_url} alt={pokemon.name} />
-					<div class="types">
-						{#each pokemon.types as type}
-							<span class="type">{type}</span>
-						{/each}
-					</div>
-				</div>
+				<Card>
+					<CardHeader>
+						<CardTitle>#{pokemon.id} {pokemon.name}</CardTitle>
+					</CardHeader>
+					<CardContent>
+						<img src={pokemon.image_url} alt={pokemon.name} />
+						<div class="flex gap-2">
+							{#each pokemon.types as type}
+								<Badge variant="secondary">{type}</Badge>
+							{/each}
+						</div>
+					</CardContent>
+				</Card>
 			{/if}
 		{:catch error}
-			<div class="error">Failed to load Pokemon</div>
+			<Alert variant="destructive">
+				<AlertDescription
+					>Failed to load Pokemon: {error.message || 'Unknown error'}</AlertDescription
+				>
+			</Alert>
 		{/await}
 	{/if}
 </main>
-
-<style>
-	main {
-		max-width: 400px;
-		margin: 2rem auto;
-		padding: 1rem;
-		text-align: center;
-		font-family: Arial, sans-serif;
-	}
-
-	button {
-		background: #007acc;
-		color: white;
-		border: none;
-		padding: 0.5rem 1rem;
-		border-radius: 4px;
-		cursor: pointer;
-		margin-bottom: 1rem;
-	}
-
-	button:disabled {
-		background: #ccc;
-		cursor: not-allowed;
-	}
-
-	.loading {
-		padding: 2rem;
-		color: #666;
-		font-style: italic;
-	}
-
-	.pokemon {
-		border: 1px solid #ddd;
-		border-radius: 8px;
-		padding: 1rem;
-		margin-top: 1rem;
-	}
-
-	.pokemon img {
-		max-width: 150px;
-		height: auto;
-	}
-
-	.types {
-		margin-top: 0.5rem;
-	}
-
-	.type {
-		background: #f0f0f0;
-		padding: 0.25rem 0.5rem;
-		border-radius: 4px;
-		margin: 0 0.25rem;
-		font-size: 0.8rem;
-	}
-</style>
