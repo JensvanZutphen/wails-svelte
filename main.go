@@ -21,7 +21,7 @@ func main() {
 	err := wails.Run(&options.App{
 		Title:  "Pokemon Wails App",
 		Width:  800,
-		Height: 600,
+		Height: 800,
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
