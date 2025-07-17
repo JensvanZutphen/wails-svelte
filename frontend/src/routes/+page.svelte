@@ -1,4 +1,4 @@
-<script>
+<script lang="ts">
 	import { GetRandomPokemon } from '$lib/wailsjs/go/app/App';
 	import { Button } from '$lib/components/ui/button';
 	import { Card, CardContent, CardHeader, CardTitle } from '$lib/components/ui/card';
@@ -9,11 +9,26 @@
 	import { sineInOut, bounceOut, elasticOut } from 'svelte/easing';
 	import { fade, fly, scale } from 'svelte/transition';
 
+	// TypeScript interfaces
+	interface Particle {
+		id: number;
+		x: number;
+		y: number;
+		delay: number;
+	}
+
+	interface Pokemon {
+		id: number;
+		name: string;
+		image_url: string;
+		types: string[];
+	}
+
 	// Svelte 5 runes
 	let pokemonId = $state(0);
 	let isAnimating = $state(false);
 	let mounted = $state(false);
-	let particles = $state([]);
+	let particles = $state<Particle[]>([]);
 	let animationTime = $state(0);
 
 	// Derived values for background orbs using runes
@@ -39,7 +54,7 @@
 	$effect(() => {
 		if (!mounted) return;
 		
-		let animationId;
+		let animationId: number;
 		function animate() {
 			animationTime = Date.now();
 			animationId = requestAnimationFrame(animate);
@@ -120,8 +135,8 @@
 		fairy: 'bg-pink-300'
 	};
 
-	function getTypeColor(type) {
-		return typeColors[type.toLowerCase()] || 'bg-gray-500';
+	function getTypeColor(type: string): string {
+		return typeColors[type.toLowerCase() as keyof typeof typeColors] || 'bg-gray-500';
 	}
 
 	// Debug inspection
@@ -129,6 +144,53 @@
 	$inspect('Is Animating:', isAnimating);
 	$inspect('Particles:', particles.length);
 </script>
+
+<style>
+	.pokemon-card-3d {
+		width: 100%;
+		height: auto;
+	}
+
+	.pokemon-card-3d::part(inner) {
+		border-radius: 1.5rem;
+		overflow: hidden;
+	}
+
+	.pokemon-card-3d::part(rotate) {
+		transform-style: preserve-3d;
+	}
+
+	/* Responsive rotation limits */
+	@media (max-width: 640px) {
+		.pokemon-card-3d {
+			--atropos-rotate-x-max: 8deg;
+			--atropos-rotate-y-max: 8deg;
+		}
+	}
+
+	@media (min-width: 641px) and (max-width: 1024px) {
+		.pokemon-card-3d {
+			--atropos-rotate-x-max: 12deg;
+			--atropos-rotate-y-max: 12deg;
+		}
+	}
+
+	@media (min-width: 1025px) {
+		.pokemon-card-3d {
+			--atropos-rotate-x-max: 15deg;
+			--atropos-rotate-y-max: 15deg;
+		}
+	}
+
+	/* Accessibility: Respect reduced motion preferences */
+	@media (prefers-reduced-motion: reduce) {
+		.pokemon-card-3d {
+			--atropos-rotate-x-max: 0deg;
+			--atropos-rotate-y-max: 0deg;
+			--atropos-duration: 0ms;
+		}
+	}
+</style>
 
 <!-- Background with animated gradient -->
 <div class="relative flex h-screen flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
@@ -247,13 +309,25 @@
 				</div>
 			{:then pokemon}
 				{#if pokemon}
-					<!-- Enhanced Pokemon Card -->
-					<div class="mx-auto w-full max-w-xs transform transition-all duration-500 hover:scale-105 sm:max-w-sm lg:max-w-md" in:scale={{ duration: 600, easing: elasticOut }}>
-						<Card class="overflow-hidden border-0 bg-white/90 shadow-2xl backdrop-blur-sm transition-all duration-500 hover:shadow-3xl">
+					<!-- Enhanced Pokemon Card with Atropos 3D -->
+					<div class="mx-auto w-full max-w-xs sm:max-w-sm lg:max-w-md" in:scale={{ duration: 600, easing: elasticOut }}>
+						<atropos-component
+							class="pokemon-card-3d"
+							active-offset="40"
+							rotate-x-max="15"
+							rotate-y-max="15"
+							duration="300"
+							shadow="true"
+							shadow-offset="30"
+							shadow-scale="1.05"
+							highlight="true"
+							rotate-touch="scroll-y"
+						>
+							<Card class="overflow-hidden border-0 bg-white/90 shadow-2xl backdrop-blur-sm transition-all duration-500 hover:shadow-3xl">
 							<div class="relative">
 								<!-- Card Header with Gradient -->
 								<CardHeader class="relative overflow-hidden bg-gradient-to-r from-blue-500/10 to-purple-500/10 p-3 sm:p-6">
-									<div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
+									<div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5" data-atropos-offset="-2"></div>
 									<CardTitle class="relative text-center">
 										<div class="mb-1 flex items-center justify-center gap-1 sm:mb-2 sm:gap-2">
 											<span class="bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-lg font-bold text-transparent sm:text-xl lg:text-2xl">
@@ -269,18 +343,19 @@
 								<!-- Pokemon Image with Effects -->
 								<CardContent class="p-4 text-center sm:p-6">
 									<div class="group relative mb-3 sm:mb-4">
-										<div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 to-purple-400/20 blur-lg transition-all duration-500 group-hover:blur-xl sm:rounded-3xl sm:blur-xl sm:group-hover:blur-2xl"></div>
-										<div class="relative rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-3 shadow-inner sm:rounded-3xl sm:p-4 lg:p-6">
+										<div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-blue-400/20 to-purple-400/20 blur-lg transition-all duration-500 group-hover:blur-xl sm:rounded-3xl sm:blur-xl sm:group-hover:blur-2xl" data-atropos-offset="-3"></div>
+										<div class="relative rounded-2xl bg-gradient-to-br from-gray-50 to-gray-100 p-3 shadow-inner sm:rounded-3xl sm:p-4 lg:p-6" data-atropos-offset="-1">
 											<img
 												src={pokemon.image_url}
 												alt={pokemon.name}
 												class="mx-auto h-24 w-24 object-contain drop-shadow-lg transition-all duration-500 hover:scale-110 hover:drop-shadow-2xl sm:h-32 sm:w-32 lg:h-40 lg:w-40"
+												data-atropos-offset="5"
 											/>
 										</div>
 									</div>
 
 									<!-- Type Badges with Custom Colors -->
-									<div class="mb-3 flex flex-wrap justify-center gap-1 sm:mb-4 sm:gap-2">
+									<div class="mb-3 flex flex-wrap justify-center gap-1 sm:mb-4 sm:gap-2" data-atropos-offset="2">
 										{#each pokemon.types as type}
 											<Badge class="transform rounded-full px-2 py-1 text-xs font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:shadow-xl sm:px-3 sm:text-sm {getTypeColor(type)}">
 												{type.charAt(0).toUpperCase() + type.slice(1)}
@@ -297,6 +372,7 @@
 								</CardContent>
 							</div>
 						</Card>
+						</atropos-component>
 					</div>
 				{/if}
 			{:catch error}
