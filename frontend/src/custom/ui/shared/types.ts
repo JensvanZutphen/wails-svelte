@@ -7,12 +7,14 @@ export interface Particle {
 	delay: number;
 }
 
-export interface Pokemon {
-	id: number;
-	name: string;
-	image_url: string;
-	types: string[];
-}
+// Import auto-generated types from Wails
+import { models } from '$lib/wailsjs/go/models';
+
+// Re-export Wails-generated types for convenience
+export type Pokemon = models.Pokemon;
+export type PokemonStat = models.PokemonStat;
+export type PokemonAbility = models.PokemonAbility;
+export type PokemonSpecies = models.PokemonSpecies;
 
 // Component prop interfaces
 export interface AnimatedBackgroundProps {
@@ -34,6 +36,14 @@ export interface PokemonCardProps {
 	pokemon: Pokemon | null;
 	isLoading: boolean;
 	error?: string;
+}
+
+export interface PokemonFlipCardProps {
+	pokemon: Pokemon | null;
+	isLoading: boolean;
+	error?: string;
+	isFlipped?: boolean;
+	onFlip?: () => void;
 }
 
 export interface WelcomeStateProps {

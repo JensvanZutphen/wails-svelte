@@ -10,37 +10,40 @@
 	// Svelte 5 runes
 	let pokemonId = $state(0);
 	let isAnimating = $state(false);
+	let currentPokemon = $state<Pokemon | null>(null);
+	let pokemonError = $state<string | undefined>(undefined);
 	let animatedBackground: AnimatedBackground;
 
-	function fetchNewPokemon() {
+	async function fetchNewPokemon() {
 		isAnimating = true;
-		pokemonId++;
+		pokemonError = undefined;
 
 		// Trigger particle animation in background component
 		if (animatedBackground) {
 			animatedBackground.triggerParticles();
 		}
 
-		setTimeout(() => {
-			isAnimating = false;
-		}, 600);
-	}
-
-	async function getPokemon(): Promise<Pokemon | null> {
-		if (pokemonId === 0) return null;
-		const pokemon = await GetRandomPokemon();
-
-		// Wait for image to load before resolving
-		if (pokemon?.image_url) {
-			await preloadImage(pokemon.image_url);
+		try {
+			const pokemon = await GetRandomPokemon();
+			currentPokemon = pokemon;
+			pokemonId++;
+		} catch (error) {
+			pokemonError = error instanceof Error ? error.message : 'Unknown error occurred';
+			currentPokemon = null;
+		} finally {
+			setTimeout(() => {
+				isAnimating = false;
+			}, 600);
 		}
-
-		return pokemon;
 	}
 
 	// Debug inspection
 	$inspect('Pokemon ID:', pokemonId);
 	$inspect('Is Animating:', isAnimating);
+	$inspect('Current Pokemon:', currentPokemon);
+	$inspect('Pokemon Error:', pokemonError);
+	$inspect('Should Show Pokemon Card:', pokemonId > 0 || currentPokemon);
+	$inspect('Should Show Welcome:', !(pokemonId > 0 || currentPokemon));
 </script>
 
 
@@ -55,16 +58,19 @@
 		<HeroSection onDiscoverClick={fetchNewPokemon} isLoading={isAnimating} />
 
 		<!-- Pokemon Display Area -->
-		{#if pokemonId > 0}
-			{#await getPokemon()}
-				<PokemonCard pokemon={null} isLoading={true} />
-			{:then pokemon}
-				<PokemonCard pokemon={pokemon} isLoading={false} />
-			{:catch error}
-				<PokemonCard pokemon={null} isLoading={false} error={error.message || 'Unknown error'} />
-			{/await}
+		{#if currentPokemon && !isAnimating}
+			<PokemonCard 
+				pokemon={currentPokemon} 
+				isLoading={false} 
+				error={pokemonError} 
+			/>
+		{:else if isAnimating}
+			<PokemonCard 
+				pokemon={null} 
+				isLoading={true} 
+				error={undefined} 
+			/>
 		{:else}
-			<!-- Welcome State Component -->
 			<WelcomeState isVisible={true} />
 		{/if}
 	</main>
