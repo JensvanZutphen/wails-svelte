@@ -77,6 +77,8 @@ Wails automatically:
 ## Features Demonstrated
 
 - **HTTP API Integration**: Fetching data from external REST APIs
+- **Flip Card Animation**: Smooth transitions between Pokemon image and stats
+- **Advanced Component Architecture**: Custom UI components with TypeScript
 - **Async/Await**: Modern JavaScript async patterns with Go backends
 - **Image Preloading**: Ensuring all resources are ready before display
 - **Error Handling**: Proper error boundaries and user feedback
